@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import getErrorMessageAndCode from '../utils/error/getErrorMessageAndCode';
 import * as AuthService from '../service/auth.service';
-import { TOKEN_AGE_MS } from '../constrains';
+import { TOKEN_AGE_MS, __prod__ } from '../constrains';
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -9,7 +9,7 @@ export const login = async (req: Request, res: Response) => {
 
     return res
       .cookie('jwt', token, {
-        httpOnly: true,
+        httpOnly: false,
         maxAge: TOKEN_AGE_MS, // 3hrs in ms
       })
       .status(200)

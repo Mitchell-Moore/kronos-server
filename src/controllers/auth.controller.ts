@@ -9,12 +9,13 @@ export const login = async (req: Request, res: Response) => {
 
     return res
       .cookie('jwt', token, {
-        httpOnly: false,
+        httpOnly: true,
         maxAge: TOKEN_AGE_MS, // 3hrs in ms
       })
       .status(200)
       .json({
         data: user,
+        token,
         message: 'Successfully logged in',
       });
   } catch (error) {

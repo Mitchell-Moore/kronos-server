@@ -50,8 +50,8 @@ export const register = async (body: Partial<User>): Promise<Partial<User>> => {
   const userSchema = z.object({
     email: z.string(),
     password: z.string().min(8),
-    first_name: z.string(),
-    last_name: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
   });
 
   try {

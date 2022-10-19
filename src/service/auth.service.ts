@@ -5,14 +5,13 @@ import BaseError from '../utils/error/BaseError';
 import jwt from 'jsonwebtoken';
 import { excludePassword } from '../utils/user/excludePassword';
 import { JWT_ACCESS_SECRET, TOKEN_AGE_SECONDS } from '../constrains';
-require('dotenv').config();
 
 const prisma = new PrismaClient();
 
 export const login = async (body: {
   email: string;
   password: string;
-}): Promise<{ user: User; token: string }> => {
+}): Promise<{ user: Partial<User>; token: string }> => {
   const userSchema = z.object({
     email: z.string(),
     password: z.string(),
@@ -20,7 +19,9 @@ export const login = async (body: {
 
   try {
     const data = userSchema.parse(body);
-    const user = await prisma.user.findFirst({ where: { email: data.email } });
+    const user = await prisma.user.findFirst({
+      where: { email: data.email },
+    });
 
     if (!user) {
       throw new BaseError(400, 'User does not exist');
@@ -34,7 +35,7 @@ export const login = async (body: {
       expiresIn: TOKEN_AGE_SECONDS,
     });
 
-    return { user, token };
+    return { user: excludePassword(user, 'password'), token };
   } catch (e) {
     if (
       e instanceof ZodError ||

@@ -14,6 +14,12 @@ export const getSchedules = async (req: Request, res: Response) => {
 
     const userId = Number(req.params.user_id);
     const schedules = await ScheduleService.getSchedules(userId);
+    if (schedules && schedules.length > 0) {
+      const dateUTC = schedules[0].startDateTime.toISOString();
+      const secondDate = new Date(dateUTC);
+      console.log(dateUTC);
+      console.log(secondDate.toISOString());
+    }
 
     return res.status(200).json({
       data: schedules,
@@ -27,8 +33,8 @@ export const getSchedules = async (req: Request, res: Response) => {
 //TODO implement the schedule service to accept schedules (maybe should do it for a single schedule????)
 export const addOrUpdateSchedules = async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.params.user_id);
-    const schedules = await ScheduleService.getSchedules(userId);
+    // const userId = Number(req.params.user_id);
+    const schedules = await ScheduleService.addSchedule(req.body);
 
     return res.status(200).json({
       data: schedules,

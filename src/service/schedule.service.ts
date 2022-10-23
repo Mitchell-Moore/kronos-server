@@ -10,9 +10,7 @@ import BaseError from '../utils/error/BaseError';
 
 const prisma = new PrismaClient();
 
-export const getSchedules = async (
-  userId: number
-): Promise<Schedule[] | null> => {
+export const getSchedules = async (userId: number): Promise<Schedule[] | null> => {
   try {
     const schedules = await prisma.schedule.findMany({
       where: {
@@ -26,9 +24,7 @@ export const getSchedules = async (
   }
 };
 
-export const addSchedule = async (
-  body: Partial<Schedule>
-): Promise<Schedule> => {
+export const addSchedule = async (body: Partial<Schedule>): Promise<Schedule> => {
   const scheduleSchema = z.object({
     startDateTime: z.string(),
     endDateTime: z.string(),
@@ -61,10 +57,7 @@ export const addSchedule = async (
 
     return schedule;
   } catch (e) {
-    if (
-      e instanceof ZodError ||
-      e instanceof Prisma.PrismaClientKnownRequestError
-    ) {
+    if (e instanceof ZodError || e instanceof Prisma.PrismaClientKnownRequestError) {
       throw new BaseError(400, e.message);
     }
     throw new BaseError(500, 'Server Error');
@@ -79,10 +72,7 @@ export const deleteScheduleOnSameDay = async (data: {
   userId: number;
 }) => {
   try {
-    let start = convertDateToStartOfUTCDay(
-      data.startDateTime,
-      data.originalTimezone
-    );
+    let start = convertDateToStartOfUTCDay(data.startDateTime, data.originalTimezone);
     let end = convertDateToEndOfUTCDay(data.endDateTime, data.originalTimezone);
 
     const schedulesSameDay = await prisma.schedule.findMany({
@@ -126,17 +116,10 @@ export const deleteScheduleOnSameDay = async (data: {
         },
       });
 
-      let scheduleStart = convertDateUTCToTimezone(
-        data.startDateTime,
-        data.originalTimezone
-      );
-      console.log(scheduleStart);
-      let scheduleEnd = convertDateUTCToTimezone(
-        data.endDateTime,
-        data.originalTimezone
-      );
-      console.log(scheduleEnd);
+      let scheduleStart = convertDateUTCToTimezone(start, data.originalTimezone);
+      let scheduleEnd = convertDateUTCToTimezone(end, data.originalTimezone);
 
+      const schedulesToDelete = [];
       for (let i = 0; i < schedulesRecurring.length; i++) {
         //Convert the schedule to the requested timezone
         let curStart = convertDateUTCToOriginalTimeZoneToNewTimeZone(
@@ -144,17 +127,30 @@ export const deleteScheduleOnSameDay = async (data: {
           schedulesRecurring[i].originalTimezone,
           data.originalTimezone
         );
-        console.log(curStart);
-
         let curEnd = convertDateUTCToOriginalTimeZoneToNewTimeZone(
           schedulesRecurring[i].endDateTime,
           schedulesRecurring[i].originalTimezone,
           data.originalTimezone
         );
-        console.log(curEnd);
 
-        //Convert the schedule to the requested timezone
+        //Check if new schedule or old schedule are on same day of the week
+        if (
+          curStart.getDay() === scheduleStart.getDay() ||
+          curStart.getDay() === scheduleEnd.getDay() ||
+          curEnd.getDay() === scheduleStart.getDay() ||
+          curEnd.getDay() === scheduleEnd.getDay()
+        ) {
+          schedulesToDelete.push(schedulesRecurring[i].id);
+        }
       }
+
+      await prisma.schedule.deleteMany({
+        where: {
+          id: {
+            in: schedulesToDelete,
+          },
+        },
+      });
     }
 
     // console.log(schedules);

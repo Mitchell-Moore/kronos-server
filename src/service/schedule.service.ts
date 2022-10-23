@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient, Schedule } from '@prisma/client';
 import { z, ZodError } from 'zod';
 import {
+  checkIfRecurringScheduleOnSameDayOfWeek,
   convertDateToEndOfUTCDay,
   convertDateToStartOfUTCDay,
   convertDateUTCToOriginalTimeZoneToNewTimeZone,
@@ -81,21 +82,19 @@ export const deleteScheduleOnSameDay = async (data: {
         OR: [
           {
             startDateTime: {
-              lte: end.toISOString(),
+              lt: end.toISOString(),
               gte: start.toISOString(),
             },
           },
           {
             endDateTime: {
-              lte: end.toISOString(),
+              lt: end.toISOString(),
               gte: start.toISOString(),
             },
           },
         ],
       },
     });
-
-    console.log(schedulesSameDay);
 
     await prisma.schedule.deleteMany({
       where: {
@@ -105,52 +104,46 @@ export const deleteScheduleOnSameDay = async (data: {
       },
     });
 
-    if (data.isRecurring) {
-      const schedulesRecurring = await prisma.schedule.findMany({
-        where: {
-          userId: data.userId,
-          isRecurring: true,
-          startDateTime: {
-            lte: end.toISOString(),
-          },
-        },
-      });
+    // if (data.isRecurring) {
+    //   const schedulesRecurring = await prisma.schedule.findMany({
+    //     where: {
+    //       userId: data.userId,
+    //       isRecurring: true,
+    //     },
+    //   });
 
-      let scheduleStart = convertDateUTCToTimezone(start, data.originalTimezone);
-      let scheduleEnd = convertDateUTCToTimezone(end, data.originalTimezone);
+    //   let scheduleStart = convertDateUTCToTimezone(start, data.originalTimezone);
+    //   let scheduleEnd = convertDateUTCToTimezone(end, data.originalTimezone);
 
-      const schedulesToDelete = [];
-      for (let i = 0; i < schedulesRecurring.length; i++) {
-        //Convert the schedule to the requested timezone
-        let curStart = convertDateUTCToOriginalTimeZoneToNewTimeZone(
-          schedulesRecurring[i].startDateTime,
-          schedulesRecurring[i].originalTimezone,
-          data.originalTimezone
-        );
-        let curEnd = convertDateUTCToOriginalTimeZoneToNewTimeZone(
-          schedulesRecurring[i].endDateTime,
-          schedulesRecurring[i].originalTimezone,
-          data.originalTimezone
-        );
+    //   const schedulesToDelete = [];
+    //   for (let i = 0; i < schedulesRecurring.length; i++) {
+    //     //Convert the schedule to the requested timezone
+    //     let curStart = convertDateUTCToOriginalTimeZoneToNewTimeZone(
+    //       schedulesRecurring[i].startDateTime,
+    //       schedulesRecurring[i].originalTimezone,
+    //       data.originalTimezone
+    //     );
+    //     let curEnd = convertDateUTCToOriginalTimeZoneToNewTimeZone(
+    //       schedulesRecurring[i].endDateTime,
+    //       schedulesRecurring[i].originalTimezone,
+    //       data.originalTimezone
+    //     );
 
-        //Check if new schedule or old schedule are on same day of the week
-        if (
-          curStart.getDay() === scheduleStart.getDay() ||
-          curStart.getDay() === scheduleEnd.getDay() ||
-          curEnd.getDay() === scheduleStart.getDay() ||
-          curEnd.getDay() === scheduleEnd.getDay()
-        ) {
-          schedulesToDelete.push(schedulesRecurring[i].id);
-        }
-      }
+    //     //Check if new schedule or old schedule are on same day of the week
+    //     if (
+    //       checkIfRecurringScheduleOnSameDayOfWeek({ startDateTime: curStart, endDateTime: curEnd }, { startDateTime: scheduleStart, endDateTime: scheduleEnd })
+    //     ) {
+    //       schedulesToDelete.push(schedulesRecurring[i].id);
+    //     }
+    //   }
 
-      await prisma.schedule.deleteMany({
-        where: {
-          id: {
-            in: schedulesToDelete,
-          },
-        },
-      });
+      // await prisma.schedule.deleteMany({
+      //   where: {
+      //     id: {
+      //       in: schedulesToDelete,
+      //     },
+      //   },
+      // });
     }
 
     // console.log(schedules);

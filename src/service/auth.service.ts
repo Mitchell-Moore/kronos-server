@@ -8,10 +8,7 @@ import { JWT_ACCESS_SECRET, TOKEN_AGE_SECONDS } from '../constrains';
 
 const prisma = new PrismaClient();
 
-export const login = async (body: {
-  email: string;
-  password: string;
-}): Promise<{ user: Partial<User>; token: string }> => {
+export const login = async (body: { email: string; password: string }): Promise<{ user: Partial<User>; token: string }> => {
   const userSchema = z.object({
     email: z.string(),
     password: z.string(),
@@ -37,10 +34,7 @@ export const login = async (body: {
 
     return { user: excludePassword(user, 'password'), token };
   } catch (e) {
-    if (
-      e instanceof ZodError ||
-      e instanceof Prisma.PrismaClientKnownRequestError
-    ) {
+    if (e instanceof ZodError || e instanceof Prisma.PrismaClientKnownRequestError) {
       throw new BaseError(400, e.message);
     }
     throw new BaseError(500, 'Server Error');
@@ -53,6 +47,7 @@ export const register = async (body: Partial<User>): Promise<Partial<User>> => {
     password: z.string().min(8),
     firstName: z.string(),
     lastName: z.string(),
+    userName: z.string(),
   });
 
   try {
@@ -68,10 +63,7 @@ export const register = async (body: Partial<User>): Promise<Partial<User>> => {
 
     return excludePassword(user, 'password');
   } catch (e) {
-    if (
-      e instanceof ZodError ||
-      e instanceof Prisma.PrismaClientKnownRequestError
-    ) {
+    if (e instanceof ZodError || e instanceof Prisma.PrismaClientKnownRequestError) {
       throw new BaseError(400, e.message);
     }
     throw new BaseError(500, 'Server Error');

@@ -16,7 +16,9 @@ model User {
   firstName  String
   lastName  String
   password String
-   schedule Schedule[]
+  schedule Schedule[]
+  userName String @unique
+  meetingDuration Int @default(10) //Just putting this here for now but will probably chnage add more types diff duration
 }
 
 model Schedule {

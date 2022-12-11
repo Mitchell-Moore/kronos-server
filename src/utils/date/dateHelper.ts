@@ -102,3 +102,11 @@ export const checkIfRecurringScheduleOnSameDayOfWeek = (
 export const isDateBetweenDates = (dateToCheck: Date, startDate: Date, endDate: Date): boolean => {
   return dateToCheck >= startDate && endDate < dateToCheck;
 };
+
+export const getDayOfWeek = (dateTime: Date, timeZone: string): string => {
+  return new Date(
+    dateTime.toLocaleString('en-US', {
+      timeZone,
+    })
+  ).toLocaleString('en-us', { weekday: 'long' });
+};

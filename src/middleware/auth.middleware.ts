@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_ACCESS_SECRET } from '../constrains';
 
 export const userAuth = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies.jwt;
+  const token = req.headers.authorization;
   if (token) {
     try {
       const decoded = jwt.verify(token, JWT_ACCESS_SECRET);
@@ -15,8 +15,6 @@ export const userAuth = (req: Request, res: Response, next: NextFunction) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
   } else {
-    return res
-      .status(401)
-      .json({ message: 'Not authorized, token not available' });
+    return res.status(401).json({ message: 'Not authorized, token not available' });
   }
 };

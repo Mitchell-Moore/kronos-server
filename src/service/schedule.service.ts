@@ -1,10 +1,11 @@
 import { Prisma, PrismaClient, Schedule } from '@prisma/client';
 import { z, ZodError } from 'zod';
+import { getDayOfWeek } from '../utils/date/dateHelper';
 import BaseError from '../utils/error/BaseError';
 
 const prisma = new PrismaClient();
 
-export const getSchedules = async (userId: number): Promise<Schedule[] | null> => {
+export const getSchedules = async (userId: number): Promise<(Schedule & { dayOfWeek: String }[]) | any[]> => {
   try {
     const schedules = await prisma.schedule.findMany({
       where: {
@@ -12,7 +13,12 @@ export const getSchedules = async (userId: number): Promise<Schedule[] | null> =
       },
     });
 
-    return schedules;
+    let schedulesResponse: (Schedule & { dayOfWeek: String }[]) | any[] = [];
+    schedules.forEach((schedule) => {
+      schedulesResponse.push({ ...schedule, dayOfWeek: getDayOfWeek(schedule.startDateTime, schedule.originalTimezone) });
+    });
+
+    return schedulesResponse;
   } catch (e) {
     return e;
   }
